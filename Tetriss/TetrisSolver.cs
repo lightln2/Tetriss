@@ -24,7 +24,7 @@ public class TetrisSolver
     static void Solve(V256 board, int step, int score)
     {
         processedMoves++;
-        if (processedMoves % 100_000_000 == 0)
+        if (processedMoves % 1_000_000_000 == 0)
         {
             double millionMovesPerSecond = processedMoves / timer.Elapsed.TotalSeconds / 1000000;
             Console.WriteLine($"Processed {processedMoves:N0} moves at {timer.Elapsed} ({millionMovesPerSecond:0.00} M moves/second)");
@@ -60,7 +60,6 @@ public class TetrisSolver
                 if (((piece >> i) & board) != 0) break; // can't move anymore
                 Solve(board, piece >> i, step, score);
             }
-
         }
         movesLength -= 2;
     }

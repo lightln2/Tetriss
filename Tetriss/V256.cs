@@ -56,7 +56,7 @@ public readonly unsafe struct V256
     public V256 Min(V256 other) => Avx2.Min(_data, other._data);
     public V256 Max(V256 other) => Avx2.Max(_data, other._data);
     public V256 CompareEqual(V256 other) => Avx2.CompareEqual(_data, other._data);
-
+    
     public static V256 FromByte(byte b) => Avx2.BroadcastScalarToVector256(&b);
     public static V256 FromSByte(sbyte b) => Avx2.BroadcastScalarToVector256(&b).AsByte();
     public static V256 FromShort(short b) => Avx2.BroadcastScalarToVector256(&b).AsByte();
@@ -118,6 +118,5 @@ public readonly unsafe struct V256
         Avx2.Store(buffer, _data);
         return string.Join(" ", Enumerable.Range(0, 32).Select(i => buffer[i].ToString("X2")));
     }
-
 
 }

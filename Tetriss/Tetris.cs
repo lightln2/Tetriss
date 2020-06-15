@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 
@@ -9,7 +10,7 @@ public class Tetris
     static readonly Random rand = new Random(12345);
 
     // for drawing
-    static readonly V256 tile = V256.FromUShort(' ' + ('*' << 8));
+    static readonly V256 tile = new V256(' ' & 255, '*' & 255);
     static readonly V256 lineToStringShuffler = new V256(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1);
     static readonly V256 lineToStringMask = new V256(1, 2, 4, 8, 16, 32, 64, 128, 1, 2, 4, 8);
 
@@ -33,6 +34,7 @@ public class Tetris
         0, 4, 64, 0, 4, 64, 0, 0);
 
     // array of all rotated variants; rotation cyclically choses between them
+    // todo: encapsulate to a separate class
     static readonly V256[] fallingPiece = new V256[10];
     static int rotationsCount;
     static int fallingPieceRotation;
@@ -84,10 +86,12 @@ public class Tetris
 
     static void Main(string[] args)
     {
-        Console.BackgroundColor = ConsoleColor.Blue;
-        Console.Clear();
+        Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+
         if (args.Length == 0)
         {
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.Clear();
             PlayGame();
             return;
         }
@@ -98,6 +102,8 @@ public class Tetris
         }
         else if (args[0] == "-replay")
         {
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.Clear();
             Replay(args[1]);
             return;
         }
@@ -191,13 +197,13 @@ public class Tetris
 
     public static void RemoveFullLines(ref V256 board, ref int score)
     {
-        // every 12 bits of test:
-        V256 test = board;   // * a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 * //
-        test &= (test << 5); // ? ? ? ? ? a1&a6 a2&a7 a3&a8 a4&a9 a5*a10 ? //
-        test &= (test << 2); // ? ? ? ? ? ? ? a1&a6&a3&a8 a2&a7&a4&a9 a5*a10 ? //
-        test &= (test << 1); // ? ? ? ? ? ? ? ? a1&a6&a3&a8&a2&a7&a4&a9 a5*a10 ? //
-        test &= (test << 1); // ? ? ? ? ? ? ? ? ? a1&...&a10 ? 
-        // each eleventh bit out of twelve is set iff line is full
+        // fast check if board does not have full lines
+        V256 test = board;
+        test &= (test << 5);
+        test &= (test << 2);
+        test &= (test << 1);
+        test &= (test << 1);
+        // now each eleventh bit of 12-bit line is set iff line is full
         if ((test & checkLineMask) == 0) return; 
 
         int scoreBoost = 1;
@@ -209,6 +215,7 @@ public class Tetris
             {
                 score += scoreBoost;
                 scoreBoost <<= 1;
+                // remove line from the board OR-ing lower part of board (under the line) and shifted upper part of the board
                 board = (board & underLineMask) | ((board & ~underLineMask & ~lineMask) << width) | emptyLine;
             }
             underLineMask |= lineMask;
@@ -235,6 +242,7 @@ public class Tetris
 
     static string GetLine(V256 field)
     {
+        // convert lowest 12 bits of line into 12 bytes: bit 0 -> empty tile; bit 1 -> filled tile
         V256 line = field.Shuffle(lineToStringShuffler) & lineToStringMask;
         line = line.Min(V256.ONE);
         line = tile.Shuffle(line);
