@@ -4,7 +4,7 @@
 - Tetris solver using greedy in-depth search processing up to 15 million moves per second
 - Replay scenarios found by the solver
 
-<img src="https://github.com/lightln2/Tetriss/replay-58.gif" />
+<img src="https://github.com/lightln2/Tetriss/blob/master/replay-58.gif" />
 
 ## Build
 on Windows, open solution with Visual Studio 2019 or run 'build.cmd'
