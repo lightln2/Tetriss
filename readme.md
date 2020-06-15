@@ -7,18 +7,24 @@
 <img src="https://github.com/lightln2/Tetriss/blob/master/replay-58.gif" />
 
 ## Build
-on Windows, open solution with Visual Studio 2019 or run 'build.cmd'
-on other systems, run 'dotnet build -c Release -r [your-system]'
+on Windows, open solution with Visual Studio 2019 or run `build.cmd`
+on other systems, run `dotnet build -c Release -r [your-system]`
 
 ## Run
 on Windows:
 - Start the game in the console:
-    tetriss.exe 
+```
+    tetriss.exe
+```    
 - Start tetris solver with a specified depth. Found scenarios will be printed out to the console:
+```
     tetriss.exe -solve 1000
+```
 - Replay scenario found by the solver:
+```
     tetriss.exe -replay "0:0 0:0 1:2 0:0 2:-3 3:-4 0:4"
-on other systems: run 'dotnet run -c Release -p Tetriss [arguments]'
+```
+on other systems: run `dotnet run -c Release -p Tetriss [arguments]`
 
 ## License
 
