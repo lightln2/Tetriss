@@ -28,5 +28,5 @@ on other systems: run `dotnet run -c Release -p Tetriss [arguments]`
 
 ## License
 
-- **[MIT license](https://github.com/lightln2/Tetriss/license.txt)**
+- **[MIT license](https://github.com/lightln2/Tetriss/blob/master/license.txt)**
 - Copyright 2020 (c) lightln2
