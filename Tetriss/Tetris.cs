@@ -7,6 +7,7 @@ public class Tetris
 {
     public static readonly int width = 12; // field + borders
     static int score = 0;
+    static int depth = 0;
     static readonly Random rand = new Random(12345);
 
     // for drawing
@@ -28,6 +29,12 @@ public class Tetris
 
     public static readonly V256 emptyLine = new V256(1, 8);
 
+    public static readonly V256 emptyLineLast = new V256(
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 1, 8);
+
     public static readonly V256 checkLineMask = new V256(
         0, 4, 64, 0, 4, 64, 0, 4, 64, 0, 4, 64,
         0, 4, 64, 0, 4, 64, 0, 4, 64, 0, 4, 64,
@@ -43,20 +50,20 @@ public class Tetris
     // possible pieces with rotations
     public static readonly V256[][] PIECES = new V256[][]
     {
-        new[] { // I-shape
-            new V256(240, 0),
-            new V256(64, 0, 4, 64, 0, 4),
-        },
-        new[] { // O-shape
-            new V256(96, 0, 6),
+        new[] { // S-shape
+            new V256(192, 0, 6),
+            new V256(32, 0, 6, 64),
         },
         new[] { // Z-shape
             new V256(96, 0, 12),
             new V256(64, 0, 6, 32),
         },
-        new[] { // S-shape
-            new V256(192, 0, 6),
-            new V256(32, 0, 6, 64),
+        new[] { // O-shape
+            new V256(96, 0, 6),
+        },
+        new[] { // I-shape
+            new V256(240, 0),
+            new V256(64, 0, 4, 64, 0, 4),
         },
         new[] { // L-shape
             new V256(112, 0, 2),
@@ -76,12 +83,14 @@ public class Tetris
             new V256(64, 0, 7),
             new V256(32, 0, 2, 96),
         },
+        /*
         new[] { // surprise!
             new V256(56, 128, 2, 32, 0, 14, 160, 0, 14),
             new V256(24, 1, 17, 112, 1, 25, 112, 1),
             new V256(200, 129, 20, 120, 129, 20, 200, 1),
             new V256(72, 2, 21, 224, 0, 21, 72, 2),
         },
+        */
     };
 
     static void Main(string[] args)
@@ -98,6 +107,11 @@ public class Tetris
         else if (args[0] == "-solve")
         {
             TetrisSolver.Solve(int.Parse(args[1]));
+            return;
+        }
+        else if (args[0] == "-solveWorst")
+        {
+            TetrisSolverWorst.Solve(int.Parse(args[1]));
             return;
         }
         else if (args[0] == "-replay")
@@ -138,7 +152,8 @@ public class Tetris
         DisplayField();
     }
 
-    static void SelectNextPiece() => SelectPiece(rand.Next(0, PIECES.GetLength(0)));
+    //static void SelectNextPiece() => SelectPiece(rand.Next(0, PIECES.Length));
+    static void SelectNextPiece() => SelectPiece(TetrisSolverWorst.GetWorstPiece(board));
 
     static void SelectPiece(int index)
     {
@@ -154,7 +169,8 @@ public class Tetris
     static bool MoveLeft() => Shift(-1);
     static void RotateLeft() => Rotate(1);
     static void RotateRight() => Rotate(-1);
-    static void RemoveFullLines() => RemoveFullLines(ref board, ref score);
+    //static void RemoveFullLines() => RemoveFullLines(ref board, ref score);
+    static void RemoveFullLines() => depth = RemoveFullLinesAndCountDepth(ref board, ref score);
 
     static bool Shift(int count)
     {
@@ -223,6 +239,29 @@ public class Tetris
         }
     }
 
+    public static int RemoveFullLinesAndCountDepth(ref V256 board, ref int score)
+    {
+        int depth = 0;
+        V256 lineMask = fullLine >> width;
+        V256 currentEmptyLine = emptyLineLast >> width;
+        V256 underLineMask = fullLine;
+        while (lineMask != 0)
+        {
+            depth++;
+            while ((board & lineMask) == lineMask)
+            {
+                score++;
+                // remove line from the board OR-ing lower part of board (under the line) and shifted upper part of the board
+                board = (board & underLineMask) | ((board & ~underLineMask & ~lineMask) << width) | emptyLine;
+            }
+            if ((board & lineMask) == currentEmptyLine) break; // empty line means there is nothing above
+            underLineMask |= lineMask;
+            lineMask >>= width;
+            currentEmptyLine >>= width;
+        }
+        return depth;
+    }
+
     static void DisplayField()
     {
         Console.BackgroundColor = ConsoleColor.Blue;
@@ -265,6 +304,8 @@ public class Tetris
         Console.WriteLine($"p:180  {fallingPiece[2]}");
         Console.SetCursorPosition(16, 13);
         Console.WriteLine($"p:270  {fallingPiece[3]}");
+        Console.SetCursorPosition(16, 14);
+        Console.WriteLine($"Depth  {depth}");
     }
 
     static void Replay(string script)
@@ -273,6 +314,7 @@ public class Tetris
         {
             SelectNextPiece();
             DisplayField();
+            Console.ReadLine();
             Thread.Sleep(100);
             int rotation = int.Parse(next.Split(':')[0]);
             int move = int.Parse(next.Split(':')[1]);
